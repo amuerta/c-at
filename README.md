@@ -1,4 +1,4 @@
-# C-at's virtual machine - SETVM
+# C-at virtual machine - SETVM
 
 Virtual machine is WIP and isn't meant to be used on anything more than just messing around.
 
