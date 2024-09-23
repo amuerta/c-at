@@ -31,7 +31,7 @@ Instruction* load_from_file(char* fpath,size_t* program_size)
 	FILE* 	fptr	;
 	char*  	fbuff	;
 	size_t 	flen	;
-	Instruction* instructions;
+	Instruction* instructions = 0;
 
 	fptr = fopen(fpath, "rb");
 
@@ -46,11 +46,14 @@ Instruction* load_from_file(char* fpath,size_t* program_size)
 	rewind(fptr);                      
 
 	fbuff = (byte*)  malloc(flen * sizeof(byte)); 
-	fread(fbuff, flen, 1, fptr); 
+	size_t rsize = fread(fbuff, flen, 1, fptr); 
 	fclose(fptr); 
 
-	*program_size = flen / sizeof(Instruction);
-	instructions = (Instruction*)fbuff;
+
+	if (rsize != 0) {
+		*program_size = flen / sizeof(Instruction);
+		instructions = (Instruction*)fbuff;
+	}
 
 	if( !(*program_size % 16) )
 		printf( "WARNING: UNEVEN BYTE COUNT FOR INSTRUCTION SET\n");
@@ -76,27 +79,6 @@ void print_instruction_asm(Instruction i) {
 		byte r2		=	inst.argument_reg[2];
 
 		UniformStrg immd 	=   inst.storage;
-		DataType t  		= 	inst.operand_type;
-
-		// CRASH CHECK
-		switch((Inst)op) {
-			case I_FADD:
-			case I_FSUB:
-			case I_FDIV:
-			case I_FMUL:
-			case I_FSET:
-			case I_FLOAD:
-			case I_FSAVE:
-				assert(t == f32 && 
-						"INSTRUCTION TYPE FOR FLOATS ONLY"
-						"ACCEPTS FLOATING POINT CONTEXT  "
-						"\t CURRENTLY DISASSEMBLED PROGRAM"
-						"IS CORRUPTED AND HAS INVALID FLT OPERAND"
-					  );
-				break;
-
-			default: break;
-		}
 
 		switch ((Inst)op) {
 			case I_HALT:
@@ -180,7 +162,7 @@ void print_instruction_asm(Instruction i) {
 				break;
 
 			case I_FSET:
-				printf("\n\tfset @r%d, $(%f)",r0, (float)immd.as_i32);
+				printf("\n\tfset @r%d, $(%f)",r0, (float)immd.as_f32);
 				break;
 
 			case I_SET:
@@ -193,6 +175,72 @@ void print_instruction_asm(Instruction i) {
 
 			case I_OR:
 				printf("\n\tor @r%d, @r%d, @r%d",r0, r1, r2);
+				break;
+
+
+			case I_CU2I	:
+				printf("\n\tcu2i @r%d, @r%d",r0, r1);
+				break;
+
+			case I_CI2U	:
+				printf("\n\tci2u @r%d, @r%d",r0, r1);
+				break;
+
+			case I_CF2I	:
+				printf("\n\tcf2i @r%d, @fr%d",r0, r1);
+				break;
+
+			case I_CI2F	:
+				printf("\n\tci2f @fr%d, @r%d",r0, r1);
+				break;
+
+			case I_CU2F	:
+				printf("\n\tcu2f @fr%d, @r%d",r0, r1);
+				break;
+
+			case I_CF2U	:
+				printf("\n\tcf2u @r%d, @fr%d",r0, r1);
+				break;
+
+
+			case I_CMPE:
+				printf("\n\tcmpe @r%d, @r%d, @r%d",r0, r1, r2);
+				break;
+
+			case I_CMPEG:
+				printf("\n\tcmpeg @r%d, @r%d, @r%d",r0, r1, r2);
+				break;
+
+			case I_CMPEL:
+				printf("\n\tcmpel @r%d, @r%d, @r%d",r0, r1, r2);
+				break;
+
+			case I_CMPG:
+				printf("\n\tcmpg @r%d, @r%d, @r%d",r0, r1, r2);
+				break;
+
+			case I_CMPL:
+				printf("\n\tcmpl @r%d, @r%d, @r%d",r0, r1, r2);
+				break;
+
+			case I_FCMPE:
+				printf("\n\tfcmpe @r%d, @fr%d, @fr%d",r0, r1, r2);
+				break;
+
+			case I_FCMPEG:
+				printf("\n\tfcmpeg @r%d, @fr%d, @fr%d",r0, r1, r2);
+				break;
+
+			case I_FCMPEL:
+				printf("\n\tfcmpel @r%d, @fr%d, @fr%d",r0, r1, r2);
+				break;
+
+			case I_FCMPG:
+				printf("\n\tfcmpg @r%d, @fr%d, @fr%d",r0, r1, r2);
+				break;
+
+			case I_FCMPL:
+				printf("\n\tfcmpl @r%d, @fr%d, @fr%d",r0, r1, r2);
 				break;
 
 			case I_JMP:

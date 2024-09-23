@@ -15,7 +15,7 @@
 	assert(false && "TODO: IMPLEMENT MBLK | MMAP BACKEND")
 #endif
 
-#define FMT_PADDING "\n\n\n\n\n"
+#define FMT_PADDING "\n\n\n\n"
 
 #define INT_REG_COUNT 		4
 #define FLT_REG_COUNT 		4
@@ -89,7 +89,13 @@ typedef enum {
 	I_AND	,
 	I_OR	,
 
-				// CAST
+	// CAST
+	I_CU2I	,
+	I_CI2U	,
+	I_CF2I	,
+	I_CI2F	,
+	I_CU2F	,
+	I_CF2U	,
 				// C - cast
 				// I - integer 	(32 bit)
 				// F - float 	(32 bit)
@@ -97,25 +103,46 @@ typedef enum {
 				// 2 - to
 				//
 				// CI2F = cast int to float
-	/* I_CU2I	, */
-	/* I_CI2U	, */
-	/* I_CF2I	, */
-	/* I_CI2F	, */
-	/* I_CU2F	, */
-	/* I_CF2U	, */
 
-				// COMPARISONS
+	// COMPARISONS
 
-	// TODO
+	I_CMPE 	, 
+	I_CMPEG , 
+	I_CMPEL , 
+	I_CMPG 	, 
+	I_CMPL	,
 
-	/* I_CMPE 	,  */
-	/* I_CMPEG ,  */
-	/* I_CMPEL ,  */
-	/* I_CMPG 	,  */
-	/* I_CMPL */
+	I_FCMPE , 
+	I_FCMPEG, 
+	I_FCMPEL, 
+	I_FCMPG , 
+	I_FCMPL	,
+				// CMP - compare
+				// E - equal
+				// L - less than
+				// G - greater than
+				// F - float
+				//
+				// example: CMPEL - compare if equal or less than
+				//
+				// all instructions take a word register index
+				// as first argument, and second and third 
+				// register indexes as comparison subjects
+				//
+				// arguments have higher precedence depending
+				// if they are first, it means that if we doing 
+				// cmpg comparison between reg2 and reg3, 
+				// it will be performed read as:
+				// 
+				// "is reg2 greater than reg3"
+				// 
+				// 'F' before CMP means the comparison will be done
+				// on float registers. However, result in reg0 will
+				// be written to word register anyways
 
-				// Logic for constant address 
-				// conditional jumps
+
+	// Logic for constant address 
+	// conditional jumps
 	I_JMP  	,
 	I_EJMP 	,
 	I_NEJMP ,
@@ -175,8 +202,8 @@ typedef union {
 typedef struct {
 	Inst			operation		;
 	byte			argument_reg[3]	;
-	DataType 		operand_type	;
-	UniformStrg 	storage;
+	uint			word_register	;
+	UniformStrg 	storage			;
 } Instruction;
 
 // VM has stack memory separated from call stack
@@ -239,8 +266,6 @@ typedef struct {
 
 */
 
-
-
 typedef struct CallFrame {
 	size_t 				rip; 		// resume/return instruction pointer
 	uint  				bfp; 		// base frame pointer
@@ -259,7 +284,7 @@ typedef struct {
 	CallFrame 		frame_memory[16];
 	byte*			stack_memory;
 	byte* 			heap_address_space;
-	int 			is_running;
+	byte 			is_running;
 } Machine;
 
 
@@ -268,7 +293,6 @@ Instruction i_fset(byte reg,float imm) {
 		.operation = I_FSET,
 		.argument_reg = {reg},
 		.storage.as_f32 = imm,
-		.operand_type = f32				
 	};
 }
 
@@ -322,7 +346,6 @@ Instruction i_fset(byte reg,float imm) {
 		(Instruction) {						\
 			.operation = I_FLOAD,			\
 			.argument_reg = {__VA_ARGS__},	\
-			.operand_type = f32				\
 		}
 
 #define DSAVE(...) 							\
@@ -335,7 +358,6 @@ Instruction i_fset(byte reg,float imm) {
 		(Instruction) {						\
 			.operation = I_FSAVE,			\
 			.argument_reg = {__VA_ARGS__},	\
-			.operand_type = f32				\
 		}
 
 #define INC(...)							\
@@ -360,7 +382,6 @@ Instruction i_fset(byte reg,float imm) {
 		(Instruction) {						\
 			.operation = I_FADD,			\
 			.argument_reg = {__VA_ARGS__},	\
-			.operand_type = f32				\
 		}
 
 
@@ -374,7 +395,6 @@ Instruction i_fset(byte reg,float imm) {
 		(Instruction) {						\
 			.operation = I_FSUB,			\
 			.argument_reg = {__VA_ARGS__},	\
-			.operand_type = f32				\
 		}
 
 
@@ -389,7 +409,6 @@ Instruction i_fset(byte reg,float imm) {
 		(Instruction) {						\
 			.operation = I_FDIV,			\
 			.argument_reg = {__VA_ARGS__},	\
-			.operand_type = f32				\
 		}
 
 #define MUL(...) 							\
@@ -402,7 +421,6 @@ Instruction i_fset(byte reg,float imm) {
 		(Instruction) {						\
 			.operation = I_FMUL,			\
 			.argument_reg = {__VA_ARGS__},	\
-			.operand_type = f32				\
 		}
 
 #define AND(...)							\
@@ -416,6 +434,109 @@ Instruction i_fset(byte reg,float imm) {
 			.operation = I_OR,				\
 			.argument_reg = {__VA_ARGS__},	\
 		}
+
+// CAST
+
+#define CU2I(...)							\
+		(Instruction) {						\
+			.operation = I_CU2I,			\
+			.argument_reg = {__VA_ARGS__},	\
+		}
+
+#define CI2U(...)							\
+		(Instruction) {						\
+			.operation = I_CI2U,			\
+			.argument_reg = {__VA_ARGS__},	\
+		}
+
+#define CF2I(...)							\
+		(Instruction) {						\
+			.operation = I_CF2I,			\
+			.argument_reg = {__VA_ARGS__},	\
+		}
+
+#define CI2F(...)							\
+		(Instruction) {						\
+			.operation = I_CI2F,			\
+			.argument_reg = {__VA_ARGS__},	\
+		}
+
+#define CU2F(...)							\
+		(Instruction) {						\
+			.operation = I_CU2F,			\
+			.argument_reg = {__VA_ARGS__},	\
+		}
+
+#define CF2U(...)							\
+		(Instruction) {						\
+			.operation = I_CF2U,			\
+			.argument_reg = {__VA_ARGS__},	\
+		}
+
+// COMPARISONS
+
+	// word comparison
+#define CMPE(...)							\
+		(Instruction) {						\
+			.operation = I_CMPE,			\
+			.argument_reg = {__VA_ARGS__},	\
+		}
+
+#define CMPEG(...)							\
+		(Instruction) {						\
+			.operation = I_CMPEG,			\
+			.argument_reg = {__VA_ARGS__},	\
+		}
+
+#define CMPEL(...)							\
+		(Instruction) {						\
+			.operation = I_CMPEL,			\
+			.argument_reg = {__VA_ARGS__},	\
+		}
+
+#define CMPG(...)							\
+		(Instruction) {						\
+			.operation = I_CMPG,			\
+			.argument_reg = {__VA_ARGS__},	\
+		}
+
+#define CMPL(...)							\
+		(Instruction) {						\
+			.operation = I_CMPL,			\
+			.argument_reg = {__VA_ARGS__},	\
+		}
+
+	// float comparison
+#define FCMPE(...)							\
+		(Instruction) {						\
+			.operation = I_FCMPE,			\
+			.argument_reg = {__VA_ARGS__},	\
+		}
+
+#define FCMPEG(...)							\
+		(Instruction) {						\
+			.operation = I_FCMPEG,			\
+			.argument_reg = {__VA_ARGS__},	\
+		}
+
+#define FCMPEL(...)							\
+		(Instruction) {						\
+			.operation = I_FCMPEL,			\
+			.argument_reg = {__VA_ARGS__},	\
+		}
+
+#define FCMPG(...)							\
+		(Instruction) {						\
+			.operation = I_FCMPG,			\
+			.argument_reg = {__VA_ARGS__},	\
+		}
+
+#define FCMPL(...)							\
+		(Instruction) {						\
+			.operation = I_FCMPL,			\
+			.argument_reg = {__VA_ARGS__},	\
+		}
+
 
 // register stored address jumps
 

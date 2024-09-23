@@ -12,7 +12,7 @@ decca_src=./src/decca.c
 tester=./scripts/tester.sh
 
 caasm: 
-	$(cc) -o $(caasm) $(caasm_src) -fsanitize=address -Wall -Wextra
+	$(cc) -o $(caasm) $(caasm_src) -g -fsanitize=address -Wall -Wextra
 
 caasm_gdb: 
 	$(cc) -o $(caasm) $(caasm_src) -g -Wall -Wextra

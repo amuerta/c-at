@@ -33,6 +33,15 @@ const char* KEYWORDS[] = {
 	"add"	, "sub"		, "div"		, "mul"	, 
 	"fadd "	, "fsub"	, "fdiv"	, "fmul", 
 	"and"	, "or"		, 
+	"cu2i"	, "ci2u"	,
+	"cf2i"	, "ci2f"	,
+	"cu2f"	, "cf2u"	,
+	"cmpe"	,
+	"cmpeg"	, "cmpel"	,
+	"cmpg"	, "cmpl"	,
+	"fcmpe"	,
+	"fcmpeg", "fcmpel"	,
+	"fcmpg"	, "fcmpl"	,
 	"jmp"	, "ejmp"	, "nejmp"	, 
 	"rjmp"	, "erjmp"	, "nerjmp"	, 
 	"print"	, "regdump",
@@ -185,6 +194,12 @@ size_t get_instuction_count (Inst i) {
 
 		case I_SET:
 		case I_FSET:
+		case I_CU2I:
+		case I_CI2U:
+		case I_CF2I:
+		case I_CI2F:
+		case I_CU2F:
+		case I_CF2U:
 			ic = 2;
 			break;
 
@@ -208,6 +223,18 @@ size_t get_instuction_count (Inst i) {
 		case I_NEJMP:
 		case I_ERJMP:
 		case I_NERJMP:
+
+		case I_CMPG:
+		case I_CMPL:
+		case I_CMPEG:
+		case I_CMPEL:
+		case I_CMPE:
+
+		case I_FCMPG:
+		case I_FCMPL:
+		case I_FCMPEG:
+		case I_FCMPEL:
+		case I_FCMPE:
 			ic = 3;
 			break;
 
@@ -240,12 +267,14 @@ Instruction assemble
 	 uint 	arg2, uint 	arg3,
 	 float 	fval, uint 	dval) 
 {
+
 	switch(i) {
 		case I_SET:
 			return SET(arg0,dval);
 			break;
 
 		case I_FSET:
+			printf("DEBUG FSET: %f\n",fval);
 			return FSET(arg0,fval);
 			break;
 
@@ -333,6 +362,70 @@ Instruction assemble
 			return OR(arg0,arg1,arg2);
 			break;
 
+		case I_CU2I	:
+			return CU2I(arg0,arg1);
+			break;
+
+		case I_CI2U	:
+			return CI2U(arg0,arg1);
+			break;
+
+		case I_CF2I	:
+			return CF2I(arg0,arg1);
+			break;
+
+		case I_CI2F	:
+			return CI2F(arg0,arg1);
+			break;
+
+		case I_CU2F	:
+			return CU2F(arg0,arg1);
+			break;
+
+		case I_CF2U	:
+			return CF2U(arg0,arg1);
+			break;
+
+		case I_CMPG:
+			return CMPG(arg0,arg1,arg2);
+			break;
+
+		case I_CMPL:
+			return CMPL(arg0,arg1,arg2);
+			break;
+
+		case I_CMPEG:
+			return CMPEG(arg0,arg1,arg2);
+			break;
+
+		case I_CMPEL:
+			return CMPEL(arg0,arg1,arg2);
+			break;
+
+		case I_CMPE:
+			return CMPE(arg0,arg1,arg2);
+			break;
+
+		case I_FCMPG:
+			return FCMPG(arg0,arg1,arg2);
+			break;
+
+		case I_FCMPL:
+			return FCMPL(arg0,arg1,arg2);
+			break;
+
+		case I_FCMPEG:
+			return FCMPEG(arg0,arg1,arg2);
+			break;
+
+		case I_FCMPEL:
+			return FCMPEL(arg0,arg1,arg2);
+			break;
+
+		case I_FCMPE:
+			return FCMPE(arg0,arg1,arg2);
+			break;
+
 		case I_RJMP:
 			return RJMP(dval); 
 			break;
@@ -397,6 +490,7 @@ uint find_label(Reg r,Label* labels,size_t label_count,byte* error)
 	assert(strlen(r.value_label) >= 2 && "LABEL HAS TO BE AT LEAST 1 char");
 	// skip indentifier L from label name
 	char* label = r.value_label;
+	printf("label : %s\n",label);
 	label++; 
 
 	for(uint i = 0; i < label_count; i++)
@@ -460,7 +554,7 @@ Instruction assemble_line(	Token* inst_tk,
 				if (r.is_value && (r.is_float 
 					|| is_float_instr((Inst)type))) 
 				{
-					fvalue = r.value_literall.f32;
+					fvalue = (float)r.value_literall.dec; // unions are werid
 					#ifdef FULL_DEBUG_VIEW
 						printf("$f(%f)",(float)r.value_literall.dec);
 					#endif

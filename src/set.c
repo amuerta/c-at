@@ -120,26 +120,8 @@ void execute_op(Machine *m) {
 
 		UniformStrg immd 	=   inst.storage;
 		/* uint immd 	=   inst.storage; */
-		DataType t  		= 	inst.operand_type;
 
 		// CRASH CHECK
-		switch((Inst)op) {
-			case I_FADD:
-			case I_FSUB:
-			case I_FDIV:
-			case I_FMUL:
-			case I_FSET:
-			case I_FLOAD:
-			case I_FSAVE:
-				assert(t == f32 && 
-						"INSTRUCTION TYPE FOR FLOATS ONLY"
-						"ACCEPTS FLOATING POINT CONTEXT  "
-						);
-				break;
-
-			default: break;
-		}
-
 		switch ((Inst)op) {
 			
 			case I_ENTRY:
@@ -248,6 +230,80 @@ void execute_op(Machine *m) {
 				// unlike RJMP jump to litreall address
 				// passed as first argument
 			
+			// Casts
+			
+			case I_CU2I	:
+				d_reg[r0] = (int)  d_reg[r1];
+				break;
+
+			case I_CI2U	:
+				d_reg[r0] = (uint) d_reg[r1];
+				break;
+
+			case I_CF2I	:
+				d_reg[r0] = (int)  f_reg[r1];
+				break;
+
+			case I_CI2F	:
+				f_reg[r0] = (float)d_reg[r1];
+				break;
+
+			case I_CU2F	:
+				f_reg[r0] = (float)d_reg[r1];
+				break;
+
+			case I_CF2U	:
+				d_reg[r0] = (uint) f_reg[r1];
+				break;
+
+
+			// Word (u32 / i32) register comparisons
+
+			case I_CMPE: 
+				d_reg[r0] = (d_reg[r1] == d_reg[r2]);
+				break; 
+
+			case I_CMPEG: 
+				d_reg[r0] = (d_reg[r1] >= d_reg[r2]);
+				break; 
+
+			case I_CMPEL: 
+				d_reg[r0] = (d_reg[r1] <= d_reg[r2]);
+				break; 
+
+			case I_CMPG: 
+				d_reg[r0] = (d_reg[r1] >  d_reg[r2]);
+				break; 
+
+			case I_CMPL: 
+				d_reg[r0] = (d_reg[r1] <  d_reg[r2]);
+				break;
+
+			// Floating point register comparisons
+
+			case I_FCMPE: 
+				d_reg[r0] = (f_reg[r1] == f_reg[r2]);
+				break; 
+
+			case I_FCMPEG: 
+				d_reg[r0] = (f_reg[r1] >= f_reg[r2]);
+				break; 
+
+			case I_FCMPEL: 
+				d_reg[r0] = (f_reg[r1] <= f_reg[r2]);
+				break; 
+
+			case I_FCMPG: 
+				d_reg[r0] = (f_reg[r1] >  f_reg[r2]);
+				break; 
+
+			case I_FCMPL: 
+				d_reg[r0] = (f_reg[r1] <  f_reg[r2]);
+				break;
+
+			// Constant-defined Jumps 
+			// use literall address to jump to.
+
 			case I_JMP:
 				m->pc = (uint)immd.as_i32;
 				break;
@@ -262,8 +318,9 @@ void execute_op(Machine *m) {
 					m->pc = (uint)immd.as_i32;
 				break;
 
-				// Register Jump
-				// performs jump to location stored in reg0
+			// Register Jumps
+			// performs jump to location stored in reg0
+				
 			case I_RJMP:
 				m->pc = d_reg[r0];
 				break;
@@ -487,6 +544,7 @@ int main(int argc, char** argv) {
 
 #ifdef BRUTE_FORCE_PROGRAM
 
+
 	Instruction program[] = {
 		// main:
 		SET(0,44), 	// 0
@@ -542,6 +600,16 @@ int main(int argc, char** argv) {
 	execute_program(&m);
 
 #ifdef DEBUG
+	printf("\n\n");
+	printf("----------- INFO --------------\n");
+	printf("sizeof(DataType): %d\n",sizeof(DataType));
+	printf("sizeof(Instruction): %d\n",sizeof(Instruction));
+	for(uint i = 0; i < INT_REG_COUNT; i++) {
+		printf("r%d = %d, fr%d = %f\n",
+				i,m.dregisters[i],
+				i,m.fregisters[i]
+		);
+	}
 	printf(FMT_PADDING "STACK PRINT: {\n");
 	for(uint i = 0; i < 64; i++) {
 		if (i % 16 == 0) {
