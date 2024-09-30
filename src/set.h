@@ -17,8 +17,8 @@
 
 #define FMT_PADDING "\n\n\n\n"
 
-#define INT_REG_COUNT 		4
-#define FLT_REG_COUNT 		4
+#define INT_REG_COUNT 		16
+#define FLT_REG_COUNT 		16
 
 #define STACK_SIZE 	   	16384
 #define BASE_HEAP_SIZE 	65535
@@ -177,18 +177,6 @@ typedef enum {
 	I_NOP	,
 } Inst;
 
-typedef enum {
-	u8,  i8,
-	u16, i16,
-	u32, i32,
-	f32, 
-	//u64, i64, 	TODO: IMPL 64 BIT SUPPORT FOR BOTH 32BIT AND NATIVE PLATFORMS
-	
-	// arr, obj, ptr - are all referenced from stack memory 
-	array,
-	object,
-	ptr
-} DataType;
 
 typedef union {
 	byte 	as_i8;
@@ -197,7 +185,6 @@ typedef union {
 	float 	as_f32;
 	uint    as_ptr;
 } UniformStrg;
-
 
 typedef struct {
 	Inst			operation		;
@@ -276,7 +263,7 @@ typedef struct {
 	size_t 			pc; 				// program counter
 	size_t          program_size;
 	Instruction*  	program;
-	uint* 			dregisters; 		// integer
+	uint* 			iregisters; 		// integer
 	float* 			fregisters;			// floating-point
 	uint 			accum_register;		// accumulator register
 	size_t			frames;

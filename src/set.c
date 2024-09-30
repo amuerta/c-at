@@ -24,7 +24,7 @@ Machine init_machine(Instruction *p, size_t pl) {
 		.pc = 0,
 		.program = p,
 		.program_size = pl,
-		.dregisters = D_REGISTERS,
+		.iregisters = D_REGISTERS,
 		.fregisters = F_REGISTERS,
 		.stack_memory = (USE_STACK)? 
 			(STACK) : (NULL), 		// TODO
@@ -40,12 +40,12 @@ Instruction inst_next(Machine *m) {
 }
 
 
-void print_regs(uint* dregisters, float* fregisters) {
+void print_regs(uint* iregisters, float* fregisters) {
 	assert(FLT_REG_COUNT == INT_REG_COUNT && "BROKEN ASSUMPTION HERE");
 	for(uint i = 0; i < FLT_REG_COUNT; i++)
 		printf(
 				"\t | $dr%d: %d,\t  $fr%d: %f\n",
-				i,dregisters[i],
+				i,iregisters[i],
 				i,fregisters[i]
 			);
 }
@@ -110,7 +110,7 @@ void execute_op(Machine *m) {
 
 		Instruction inst = inst_next(m);
 		
-		uint* 	d_reg = m->dregisters;
+		uint* 	d_reg = m->iregisters;
 		float* 	f_reg = m->fregisters;
 
 		byte op 	= 	inst.operation	;
@@ -393,7 +393,7 @@ void execute_program(Machine* m) {
 #ifdef DEBUG_STACK
 			printf(" $PC: dec(%zu)",m->pc);
 			printf("----------------------------\n");
-			print_regs(m->dregisters,m->fregisters);
+			print_regs(m->iregisters,m->fregisters);
 			printf("----------------------------\n");
 #endif
 
@@ -602,11 +602,10 @@ int main(int argc, char** argv) {
 #ifdef DEBUG
 	printf("\n\n");
 	printf("----------- INFO --------------\n");
-	printf("sizeof(DataType): %d\n",sizeof(DataType));
 	printf("sizeof(Instruction): %d\n",sizeof(Instruction));
 	for(uint i = 0; i < INT_REG_COUNT; i++) {
 		printf("r%d = %d, fr%d = %f\n",
-				i,m.dregisters[i],
+				i,m.iregisters[i],
 				i,m.fregisters[i]
 		);
 	}

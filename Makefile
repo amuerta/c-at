@@ -9,7 +9,7 @@ caasm_src=./src/basic_assembler.c
 decca=./bin/decca
 decca_src=./src/decca.c
 
-tester=./scripts/tester.sh
+tester=./src/tester.c
 
 caasm: 
 	$(cc) -o $(caasm) $(caasm_src) -g -fsanitize=address -Wall -Wextra
@@ -50,5 +50,8 @@ args:
 argsrun: args
 	./bin/temp
 	
+test: 
+	clang $(tester) -o ./bin/tester -g -fsanitize=address
+	./bin/tester
 
 all: decca caasm vm_normal
