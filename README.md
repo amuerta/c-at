@@ -3,6 +3,13 @@
 Virtual machine is WIP and isn't meant to be used on anything more than just messing around.
 
 ## TODO
++ automated testing of predefined C templates
++ system for logging info instead of spewing it on user screen
++ more stack interation instructions: load, save, push, pop
++ stack allocation: allocstack, heap allocation: allocheap 
++ binary format header with supported major vm version, 
+
+## ROADMAP
 +   x86-64 features:
     + add 64bit registers that are 64bit wide or made of 2 32bit one.
     + make vm decide at start time what way to manage 64bit registers
@@ -41,6 +48,9 @@ Virtual machine is WIP and isn't meant to be used on anything more than just mes
     - support for more platforms: Windows, Android
     - make language utilize 64 bit data registers on 64bit platforms, or operate on two 32bit registers
     - make runtime library for the VM: print functions, OS interactions, Etc.
++   Fututre goals:
+    - concurent execution of code
+    - easy build-in way of creating threads and running pices of the program on them.
 
 ## TOOLSET
 

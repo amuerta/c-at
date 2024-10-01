@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/time.h>
 
 
 #define USE_STACK 1
@@ -20,10 +21,12 @@
 #define INT_REG_COUNT 		16
 #define FLT_REG_COUNT 		16
 
+#define FRAME_COUNT		128
 #define STACK_SIZE 	   	16384
 #define BASE_HEAP_SIZE 	65535
 
 typedef char byte;
+typedef unsigned long long time_ms_t;
 
 typedef enum {
 	I_HALT 	,
@@ -68,6 +71,9 @@ typedef enum {
 	I_CALL	,
 				// rec - stards recording data for new frame
 				//
+				// call - uses data from begining of a record to 
+				// perform a procedure call, creating a new call 
+				// frame.
 	I_GETAC	, 	
 				// getac - copies value from reg0 into special
 				// accumulator register, used as return 
@@ -177,19 +183,18 @@ typedef enum {
 	I_NOP	,
 } Inst;
 
-
 typedef union {
-	byte 	as_i8;
-	short	as_i16;
-	int   	as_i32;
-	float 	as_f32;
-	uint    as_ptr;
+	byte			as_i8;
+	short			as_i16;
+	int				as_i32;
+	float			as_f32;
+	uint			as_ptr;
+	double  		as_f64;
 } UniformStrg;
 
 typedef struct {
 	Inst			operation		;
 	byte			argument_reg[3]	;
-	uint			word_register	;
 	UniformStrg 	storage			;
 } Instruction;
 
@@ -224,7 +229,7 @@ typedef struct {
 		ret		@r0
 
 	_entry:
-		push 	44
+		rec	
 		push 	22
 		push 	22
 		call 	add
@@ -260,20 +265,39 @@ typedef struct CallFrame {
 } CallFrame;
 
 typedef struct {
+	byte platform;
+	byte major_version;
+	
+} MachineHeader;
+
+typedef struct {
+
+	// Header
+	MachineHeader 	cfg;
+
 	size_t 			pc; 				// program counter
 	size_t          program_size;
 	Instruction*  	program;
-	uint* 			iregisters; 		// integer
-	float* 			fregisters;			// floating-point
-	uint 			accum_register;		// accumulator register
+
+	// registers
+	uint* 			iregisters; 			// integer
+	float* 			fregisters;				// floating-point
+	uint 			accum_register;			// accumulator register
+	byte*			wide_accum_register;	// 2kb space
+				
+	// Stack and call frame
 	size_t			frames;
 	size_t 			stack_top;
-	CallFrame 		frame_memory[16];
+	CallFrame 		frame_memory[FRAME_COUNT];
 	byte*			stack_memory;
 	byte* 			heap_address_space;
+
+	// WM State 
 	byte 			is_running;
 } Machine;
 
+
+// INSTRUCTION DEFINITIONS
 
 Instruction i_fset(byte reg,float imm) {
 	return (Instruction) {
