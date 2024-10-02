@@ -18,7 +18,7 @@ caasm_gdb:
 	$(cc) -o $(caasm) $(caasm_src) -g -Wall -Wextra
 
 vm_normal: 
-	$(cc) -o $(vm) $(vm_src) -m32
+	$(cc) -o $(vm) $(vm_src) 
 
 vm_debug:
 	$(cc) -o $(vm) $(vm_src) -g -fsanitize=address

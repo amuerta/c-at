@@ -1,120 +1,63 @@
-#include <stdio.h>
-#include <string.h>
-#include <dirent.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <assert.h>
+#include "tester.h"
+#include "test_list.c"
 
-#define HCH_STR_IMPLEMENTATION
-#include "../lib/str.h"
-
-#define RESET		"\e[0m"
-#define RED			"\e[38;2;255;0;0m"
-#define GREEN		"\e[38;2;0;255;0m"
-#define BLUE 		"\e[38;2;0;0;255m"
-#define YELLOW		"\e[38;2;255;255;0m"
-
-#define LIGHT_RED	"\e[38;2;255;128;0m"
-#define LIGHT_GREEN	"\e[38;2;128;255;0m"
-#define LIGHT_BLUE 	"\e[38;2;0;128;255m"
-
-#define MAGNETA 	"\e[38;2;255;0;255m"
-#define PINK		"\e[38;2;255;0;127m"
-#define CYAN		"\e[38;2;0;255;255m"
-
-#define VM_PATH "./bin/set"
-#define GIT_REPO "git@github.com:amuerta/c-at.git"
-
-#define TEST_ASM false
-
-void __assert_w_error(bool condition, char* err,char* calle) {
-	if (!condition) {
-		printf("\n[%sERROR%s] (%s:%s)\t:\n>\t %s \"%s\" %s",
-				RED,
-				RESET,
-				__FILE__,
-				calle,
-				LIGHT_RED,
-				err,
-				RESET
-		);
-		exit(-1);
-	}
-}
-#define assert_w_error(CON,ERR) __assert_w_error((CON),(ERR),(char*)__func__)
-
-void printl(char* msg) {
-	printf("\n[%sLOG%s]:\t \"%s\"",
-			LIGHT_GREEN,
-			RESET,
-			msg
+TestResult run_set_program(TestProgram entry) {
+	Machine m = init_machine(
+			entry.program,
+			entry.program_size
 	);
-}
 
-void printw(char* msg) {
-	printf("\n[%sWARN%s]:\t \"%s\"",
-			LIGHT_RED, // orange
-			RESET,
-			msg
-	);
-}
-
-
-uint dir_files_count(struct dirent* e, DIR* d) {
-	rewinddir(d);
-	size_t count = 0;
-	while ((e = readdir(d)) != NULL) 
-		count++;
-	return count;
-}
-
-bool dir_has(struct dirent* e, DIR* d, char* name) {
-	rewinddir(d);
-	while ((e = readdir(d)) != NULL) 
-		if (strcmp(e->d_name,name) == 0)
-			return true;
-	return false;
-}
-
-bool print_dir(struct dirent* e, DIR* d, uint indent) {
-	rewinddir(d);
-	while ((e = readdir(d)) != NULL) 
-	{
-		for(uint i = 0; i < indent; i++) printf("\t");
-		printf("| > %s\n",e->d_name);
-	}
-	return false;
-}
-
-bool file_has_str(char* fpath, char* pattern) {
-	FILE* f;
-	char c, *buffer;
-	size_t f_len;
-	size_t p_len;
-
-	f = fopen(fpath,"r");
+	time_ms_t before, after;
+	before = time_in_microsec	();
+	execute_program(&m);
+	after = time_in_microsec	();
 	
-	if (!f) 
-		return false;
+	TestResult result = {
+		.sucess = ( entry.desired_return == m.accum_register ),
+		.return_code = m.accum_register,
+		.time_elapsed = (after - before)
+	};
 
-    fseek(f, 0, SEEK_END);
-	f_len = ftell(f);
-	rewind(f);
-
-	buffer = calloc(f_len + 1,sizeof(c));
-	assert(buffer && "FAILED TO CALLOC ");
-
-	for(uint i = 0; i < f_len; i++) {
-		buffer[i] = fgetc(f);
-	}
-
-	String str = str_move_cstr(buffer);
-	String pat = str_move_cstr(pattern);
-
-	bool result = (str_has_pattern(str,pat) != STR_NOPATTERN) ;
-	free(buffer);
-	fclose(f);
 	return result;
+}
+
+bool run_native_tests(TestProgram list[], size_t list_size, size_t* sucessful_tests) {
+	TestResult r;
+	bool all_tests_passed = true;
+
+
+	printf("\n\n");
+
+	for(uint i = 0; i < list_size; i++) {
+		TestProgram item = list[i];
+		
+		printf("\t [%sTESTING%s] Testing test case: \"%s\"\t",
+				LIGHT_BLUE,
+				RESET,
+				item.name
+		);
+		r = run_set_program(item);
+
+		all_tests_passed = all_tests_passed && r.sucess;
+
+		if (r.sucess) {
+			(*sucessful_tests)++;
+			printf("\t\t[%sOK%s]\t time: %llums",
+					LIGHT_GREEN,
+					RESET,
+					r.time_elapsed
+					);
+		}
+		else {
+			printf("[%sFAIL%s]\t return: %u",
+					RED,
+					RESET,
+					r.return_code
+			);
+		}
+		printf("\n");
+	}
+	return all_tests_passed;
 }
 
 void run_compiled_tests() {}
@@ -153,7 +96,7 @@ int main(void) {
 	if (test_asm_compiled) {
 		tests_dir = opendir("./compiled_tests");
 		printl("Found compiled tests dir"); 
-		printf("\tfile count: %lu\n",dir_files_count(dir_entry,tests_dir));
+		printf("\tfile count: %u\n",dir_files_count(dir_entry,tests_dir));
 
 		run_compiled_tests();
 
@@ -164,6 +107,30 @@ int main(void) {
 		else 
 			printw("compiled tests disabled via macro, skipping this test case");
 	}
+
+
+	printl("Running native tests");
+	size_t sucessful_tests = 0;
+	bool native_all_good = run_native_tests(
+			RAW_TESTS_LIST,
+			RAW_TESTS_LIST_LEN,
+			&sucessful_tests
+	);
+
+	printf("\n\t---\t[%sRESULTS%s]\t---\n",
+			LIGHT_GREEN, RESET);
+
+	printf("\t  Native test -> [%s]\t %lu/%lu \n",
+			(native_all_good)? 
+				GREEN"SUCCESS"RESET : 
+				RED"FAILURE"RESET,
+
+			RAW_TESTS_LIST_LEN,
+			sucessful_tests
+	);
+
+	printf("\t---\t-------------\t---\n");
+
 
 	//printf("\n  FILES:\n");
 	//print_dir(dir_entry,directory,1);

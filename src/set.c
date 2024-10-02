@@ -145,7 +145,7 @@ void execute_op(Machine *m) {
 			case I_CALL:
 				m->pc += 1;
 				call   (m->frame_memory,&m->frames,&m->pc, m->stack_top,immd.as_i32);
-				printf("CALL (frames, ip): %lu, %lu\n",m->frames,m->pc);
+				//printf("CALL (frames, ip): %lu, %lu\n",m->frames,m->pc);
 				break;
 
 			case I_GETAC:
@@ -334,27 +334,29 @@ void execute_op(Machine *m) {
 				break;
 
 			case I_PRINT:
-
-				#ifdef DEBUG
-					printf("WRITE(s:%d,b: ptr(%d),l:%d)\n",
-							d_reg[0],d_reg[1],d_reg[2]);
-				#endif
-
-				int r = write(d_reg[0],&STACK[d_reg[1]],d_reg[2]);
-				assert(r && "ERROR PERFORMING WRITE");
+				{
+					/*
+					   printf("WRITE(s:%d,b: ptr(%d),l:%d)\n",
+					   d_reg[0],d_reg[1],d_reg[2]);
+					*/
+					int r = write(d_reg[0],&STACK[d_reg[1]],d_reg[2]);
+					assert(r && "ERROR PERFORMING WRITE");
+				}			
 				break;
 
 			case I_REG_DUMP:
-				printf("REGISTER r%d VALUE: \t%d\n",r0,d_reg[r0]);
+				//printf("REGISTER r%d VALUE: \t%d\n",r0,d_reg[r0]);
 				break;
 
 			case I_RET:
 				m->accum_register = d_reg[r0];
 				if (m->frames) {
+					/*
 					printf("RET (frames, ip): %lu, %lu\n",
 							m->frames,
 							m->frame_memory[m->frames-1].rip
 					);
+					*/
 					// TODO: fix this pc -+ 1 bug
 					m->pc = m->frame_memory[m->frames-1].rip - 1;
 					m->frame_memory[m->frames-1] = (CallFrame) {0};
@@ -362,10 +364,12 @@ void execute_op(Machine *m) {
 				} else {
 					m->is_running = false;
 
+					/*
 					printf("RET (frames, ip): %lu, %lu\n",
 							m->frames,
 							m->frame_memory[m->frames].rip
-					);
+					); 
+					*/
 				}
 				break;
 
@@ -404,138 +408,6 @@ void execute_program(Machine* m) {
 
 #ifdef OLD_EXAMPLES
 void old_example(void) {
-	// code version
-	//
-	// 	i 		  		= 0
-	// 	$const one 		= 1
-	// 	max 		  	= 10
-	// 	jmp		  		= $loop
-	//
-	// loop:	
-	// 	print(i)
-	// 	i = i + one
-	//	if (i != 10) goto loop;
-	//
-	// 	halt
-	Instruction simple_loop[] = {
-		SET			(	0,		0			),
-		SET			(	1,		1			),
-		SET			(	2,		10			),
-		SET 		(	3,		4			),
-	
-		REG_DUMP	(	0, 					),
-		ADD			(	0,		0,		1	),
-		NEJMP		(   3,		0,		2	),
-	
-		HALT		()
-	};
-
-	Instruction and_or[] = {
-		SET			(	1,		0			),
-		SET			(	2,		1			),
-
-		OR 			(	0,		1,		2	),
-		REG_DUMP	(	0,	),
-		AND 		(	0,		1,		2	),
-		REG_DUMP	(	0,	),
-		
-		HALT		(),
-	};
-
-	Instruction inc_dec[] = {
-		INC			(	0	),
-		INC			(	0	),
-		INC			(	0	),
-		INC			(	0	),
-		REG_DUMP	(	0	),
-		DEC			(	0	),
-		DEC			(	0	),
-		REG_DUMP	(	0	),
-		HALT		()
-	};
-
-	Instruction save_test[] = {
-		SET			(0, 1024), 	// value
-		SET			(1, 512	), 	// address
-		DSAVE		(0,	1	),
-
-		DLOAD		(0,	1	), 	// load
-		REG_DUMP    (0),		// print
-		HALT		(),
-	};
-
-	Instruction print[] = {
-		SET			(0,	0),
-		SET			(1,	0x0A6C6F6C), // \n l o l
-		DSAVE 		(1,	0),
-
-		SET			(0, 1), // $r0 = stream
-		SET			(1, 0), // $r1 = buffer addr
-		SET 		(2, 4), // $r2 = len
-		
-		PRINT		()	  , // print $r3, $r1, $r2,
-		// print  (stream, *buffer, len)
-		HALT		()
-	};
-
-
-	Instruction print_o[] = {
-		SET			(0,	0),
-		SET			(1,	0x0A6C6F6C), // \n l o l
-		DSAVE 		(1,	0),
-
-		SET			(0, 1), // $r0 = stream
-		SET			(1, 0), // $r1 = buffer addr
-		SET 		(2, 4), // $r2 = len
-		
-		PRINT		()	  , // print $r3, $r1, $r2,
-		// print  (stream, *buffer, len)
-		HALT		()
-	};
-
-	Instruction recursion[] = {
-		// main:
-		SET(0,44), 	// 0
-		SET(1,22), 	// 1
-		REC(),     	// 2
-		PUSH(0),	// 3
-		PUSH(1),	// 4
-		CALL(7),	// 5
-		RET(),
-		
-		// add:
-		POP(0), 	// 8
-		POP(1),
-		ADD(0,0,1),
-		REG_DUMP(0),
-
-		SET(1,10),
-		REC(),
-		PUSH(0),
-		PUSH(1),
-		CALL(7),
-
-		RET(0),
-	};
-
-
-	Instruction function_call[] = {
-		// main:
-		SET(0,44), 	// 0
-		SET(1,22), 	// 1
-		REC(),     	// 2
-		PUSH(0),	// 3
-		PUSH(1),	// 4
-		CALL(7),	// 5
-		RET(),
-		
-		// add:
-		POP(0), 	// 8
-		POP(1),
-		ADD(0,0,1),
-		REG_DUMP(0),
-		RET(0),
-	};
 }
 #endif
 
@@ -552,110 +424,3 @@ void show_debug_statistic(Machine m) {
 }
 
 
-int main(int argc, char** argv) {
-
-
-#ifdef BRUTE_FORCE_PROGRAM
-
-
-	Instruction program[] = {
-		// main:
-		SET(0,44), 	// 0
-		SET(1,22), 	// 1
-		REC(),     	// 2
-		PUSH(0),	// 3
-		PUSH(1),	// 4
-		CALL(7),	// 5
-		RET(),		// 6
-		
-		// add:
-		POP(0), 	// 7
-		POP(1), 	// 8
-		ADD(0,0,1),	// 9
-		REG_DUMP(0),// 10
-		REC(),		// 11
-		SET(1,10),	// 12
-		PUSH(0),	// 13
-		PUSH(0),	// 14
-		CALL(17),	// 15
-		RET(0),		// 16
-
-		// sub
-		POP(0), 	// 17
-		POP(1),		// 18
-		ADD(0,0,1),	// 19
-		REG_DUMP(0),// 20
-		RET(0),		// 21
-	};
-
-	if (argc != 2) {
-		printf("\nUSAGE:\n"
-				"\t set ./c_at_instruction_set.caic"
-		);
-		return -1;
-	}
-
-	
-
-	Machine m = init_machine(program,arrlen(program));
-#endif
-
-
-
-#ifndef BRUTE_FORCE_PROGRAM
-	size_t proglen = 0;
-	Instruction* program = load_from_file(argv[1], &proglen);
-	Machine m = init_machine(program,proglen); 
-#endif
-
-
-#ifdef DEBUG
-	show_debug_statistic(m);
-#endif
-
-
-	time_ms_t before, after;
-
-	before = time_in_microsec();
-	execute_program(&m);
-	after = time_in_microsec();
-
-
-
-#ifdef DEBUG
-	printf(FMT_PADDING);
-	printf("------------ TIME -------------\n");
-	printf("elapsed execution time in ms: %llu",(after-before) );
-	printf(FMT_PADDING);
-	printf("--------- REGISTERS -----------\n");
-	for(uint i = 0; i < INT_REG_COUNT; i++) {
-		printf("r%d = %d, fr%d = %f\n",
-				i,m.iregisters[i],
-				i,m.fregisters[i]
-			  );
-	}
-
-	printf(FMT_PADDING "STACK PRINT: {\n");
-	for(uint i = 0; i < 64; i++) {
-		if (i % 16 == 0) {
-			printf("\n");
-		}
-		printf(" [%i] ",STACK[i]);
-	}
-	printf("\n\n}\t stack_top : %lu\n",m.stack_top);
-	printf(FMT_PADDING );
-
-
-
-	printf("--------- DISASSEBLED CODE: ------------\n");
-	/* print_program_asm(program,proglen); */
-	print_program_asm(m.program,m.program_size);
-	printf("\n----------------------------------------\n");
-#endif
-
-#ifndef BRUTE_FORCE_PROGRAM
-	free(program);
-#endif
-
-	return m.accum_register;
-}
