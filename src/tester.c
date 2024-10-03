@@ -1,11 +1,13 @@
 #include "tester.h"
 #include "test_list.c"
 
-TestResult run_set_program(TestProgram entry) {
+TestResult run_set_program(TestProgram entry, FILE* log) {
 	Machine m = init_machine(
 			entry.program,
 			entry.program_size
 	);
+
+	m.core_logger = log;
 
 	time_ms_t before, after;
 	before = time_in_microsec	();
@@ -21,7 +23,7 @@ TestResult run_set_program(TestProgram entry) {
 	return result;
 }
 
-bool run_native_tests(TestProgram list[], size_t list_size, size_t* sucessful_tests) {
+bool run_native_tests(TestProgram list[], size_t list_size, size_t* sucessful_tests, FILE* log) {
 	TestResult r;
 	bool all_tests_passed = true;
 
@@ -31,12 +33,15 @@ bool run_native_tests(TestProgram list[], size_t list_size, size_t* sucessful_te
 	for(uint i = 0; i < list_size; i++) {
 		TestProgram item = list[i];
 		
-		printf("\t [%sTESTING%s] Testing test case: \"%s\"\t",
+		printf("\t [%sTESTING%s] native: \"%s\"\t",
 				LIGHT_BLUE,
 				RESET,
 				item.name
 		);
-		r = run_set_program(item);
+
+		fprintf(log,"%s", "\n" "\n--- EXECUTION START ---\n");
+		r = run_set_program(item,log);
+		fprintf(log,"%s","\n--- EXECUTION END   ---\n");
 
 		all_tests_passed = all_tests_passed && r.sucess;
 
@@ -66,6 +71,7 @@ int main(void) {
 	struct dirent* 	dir_entry;
 	DIR*  			directory;
 	DIR* 			tests_dir;
+	FILE* 			log_file;
 	
 	bool
 		has_asm_compiled_dir,
@@ -86,13 +92,23 @@ int main(void) {
 			"Failed to proof that repo belongs to C-AT project in ./.git/config");
 	printl("The directory belongs to C-AT: (" GIT_REPO ")");
 
+	assert_w_error(dir_has(dir_entry,directory,"log"),
+			"Didn't found log directory, consider creating one");
+	printl("Log directory found");
 
 	test_asm_compiled = (
 			TEST_ASM &&
 			dir_has(dir_entry,directory,"compiled_tests") &&
 			dir_files_count(dir_entry,directory) > 2
 	);
+
+	char* log_path = "./log/core_dump";
+
+	clear_file(log_path);
+	log_file = open_file_for_logging(log_path);
 	
+
+
 	if (test_asm_compiled) {
 		tests_dir = opendir("./compiled_tests");
 		printl("Found compiled tests dir"); 
@@ -114,7 +130,8 @@ int main(void) {
 	bool native_all_good = run_native_tests(
 			RAW_TESTS_LIST,
 			RAW_TESTS_LIST_LEN,
-			&sucessful_tests
+			&sucessful_tests,
+			log_file
 	);
 
 	printf("\n\t---\t[%sRESULTS%s]\t---\n",
@@ -135,5 +152,6 @@ int main(void) {
 	//printf("\n  FILES:\n");
 	//print_dir(dir_entry,directory,1);
 	
+	fclose(log_file);
 	closedir(directory);
 }

@@ -29,7 +29,8 @@ Machine init_machine(Instruction *p, size_t pl) {
 		.frame_memory = {0},
 		.heap_address_space = NULL,	// TODO
 
-		.is_running = 1				
+		.is_running = 1	,
+		.core_logger = NULL
 	};
 }
 
@@ -38,10 +39,10 @@ Instruction inst_next(Machine *m) {
 }
 
 
-void print_regs(uint* iregisters, float* fregisters) {
+void log_regs(FILE* log,uint* iregisters, float* fregisters) {
 	assert(FLT_REG_COUNT == INT_REG_COUNT && "BROKEN ASSUMPTION HERE");
 	for(uint i = 0; i < FLT_REG_COUNT; i++)
-		printf(
+		fprintf(log,
 				"\t | $dr%d: %d,\t  $fr%d: %f\n",
 				i,iregisters[i],
 				i,fregisters[i]
@@ -101,7 +102,6 @@ void call	(CallFrame* cframe,
 		.lvp = addr,
 	};
 	(*pc) = jmp_addr;
-	//printf("\tMORE (rip): %lu\n",cframe[(*frames)].rip);
 	(*frames)++;
 }
 
@@ -145,7 +145,14 @@ void execute_op(Machine *m) {
 			case I_CALL:
 				m->pc += 1;
 				call   (m->frame_memory,&m->frames,&m->pc, m->stack_top,immd.as_i32);
-				//printf("CALL (frames, ip): %lu, %lu\n",m->frames,m->pc);
+				if (m->core_logger) {
+					fprintf(
+							m->core_logger,
+							"CALL (frames, ip): %lu, %lu\n",
+							m->frames,
+							m->pc
+						   );
+				}
 				break;
 
 			case I_GETAC:
@@ -335,41 +342,54 @@ void execute_op(Machine *m) {
 
 			case I_PRINT:
 				{
-					/*
-					   printf("WRITE(s:%d,b: ptr(%d),l:%d)\n",
-					   d_reg[0],d_reg[1],d_reg[2]);
-					*/
+					if (m->core_logger) {
+						fprintf(
+							m->core_logger,
+							"WRITE(s:%d,b: ptr(%d),l:%d)\n",
+							d_reg[0],d_reg[1],d_reg[2]
+						);
+					}
 					int r = write(d_reg[0],&STACK[d_reg[1]],d_reg[2]);
 					assert(r && "ERROR PERFORMING WRITE");
 				}			
 				break;
 
 			case I_REG_DUMP:
-				//printf("REGISTER r%d VALUE: \t%d\n",r0,d_reg[r0]);
+				if (m->core_logger) {
+					fprintf(
+						m->core_logger,
+						"REGDUMP (register %d): \t%d\n",
+						r0,
+						d_reg[r0]
+					);
+				}
 				break;
 
 			case I_RET:
 				m->accum_register = d_reg[r0];
 				if (m->frames) {
-					/*
-					printf("RET (frames, ip): %lu, %lu\n",
+					if (m->core_logger) {
+						fprintf(
+							m->core_logger,
+							"RET (frames, ip): %lu, %lu\n",
 							m->frames,
 							m->frame_memory[m->frames-1].rip
-					);
-					*/
+						);
+					}
 					// TODO: fix this pc -+ 1 bug
 					m->pc = m->frame_memory[m->frames-1].rip - 1;
 					m->frame_memory[m->frames-1] = (CallFrame) {0};
 					m->frames--;
 				} else {
 					m->is_running = false;
-
-					/*
-					printf("RET (frames, ip): %lu, %lu\n",
+					if (m->core_logger) {
+						fprintf(
+							m->core_logger,
+							"ROOTRET (frames, ip): %lu, %lu\n",
 							m->frames,
 							m->frame_memory[m->frames].rip
-					); 
-					*/
+						); 
+					}
 				}
 				break;
 
@@ -397,10 +417,6 @@ void execute_program(Machine* m) {
 
 
 #ifdef DEBUG_STACK
-			printf(" $PC: dec(%zu)",m->pc);
-			printf("----------------------------\n");
-			print_regs(m->iregisters,m->fregisters);
-			printf("----------------------------\n");
 #endif
 
 	}
@@ -411,7 +427,14 @@ void old_example(void) {
 }
 #endif
 
-void show_debug_statistic(Machine m) {
+void log_debug_registers(FILE* logger, Machine* m) {
+	fprintf (logger," $PC: dec(%zu)",m->pc				);
+	fprintf (logger,"----------------------------\n"	);
+	log_regs(logger,	m->iregisters,m->fregisters		);
+	fprintf (logger,"----------------------------\n"	);
+}
+
+void log_debug_statistic(Machine m) {
 	printf("\n\n");
 	printf("----------- INFO --------------\n");
 	printf("sizeof(Machine): %lu\n",	sizeof(Machine));

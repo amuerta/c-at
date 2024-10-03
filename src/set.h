@@ -294,6 +294,9 @@ typedef struct {
 
 	// WM State 
 	byte 			is_running;
+
+	// Debug systems
+	FILE* 			core_logger;
 } Machine;
 
 

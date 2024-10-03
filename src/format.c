@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <assert.h>
-
+#include <errno.h>
 
 #pragma once
 
@@ -118,3 +118,18 @@ bool file_has_str(char* fpath, char* pattern) {
 	return result;
 }
 
+FILE* open_file_for_logging(char* fpath) {
+	FILE* f; 
+	f = fopen(fpath, "a+");
+	assert_w_error(f, "Failed to open file for logging");
+	if (!f)
+		perror("\t> Error");
+	return f;
+}
+
+void clear_file(char* fpath) {
+	FILE* f; 
+	f = fopen(fpath, "w+");
+	if (f)
+		fclose(f);
+}

@@ -1,7 +1,7 @@
 cc=clang
 
 vm=./bin/set
-vm_src=./src/set.c
+vm_src=./src/vm.c
 
 caasm=./bin/caasmbler
 caasm_src=./src/basic_assembler.c
