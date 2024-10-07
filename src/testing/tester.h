@@ -1,5 +1,5 @@
-#include "set.c"
-#include "format.c"
+#include "../vm/set.c"
+#include "../format.c"
 
 #pragma once
 

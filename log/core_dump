@@ -1,1 +1,69 @@
 
+
+--- EXECUTION START ---
+REGDUMP (register 0): 	0
+REGDUMP (register 0): 	1
+REGDUMP (register 0): 	2
+REGDUMP (register 0): 	3
+REGDUMP (register 0): 	4
+REGDUMP (register 0): 	5
+REGDUMP (register 0): 	6
+REGDUMP (register 0): 	7
+REGDUMP (register 0): 	8
+REGDUMP (register 0): 	9
+ROOTRET (frames, ip): 0, 0
+
+--- EXECUTION END   ---
+
+
+--- EXECUTION START ---
+REGDUMP (register 0): 	1
+REGDUMP (register 0): 	0
+ROOTRET (frames, ip): 0, 0
+
+--- EXECUTION END   ---
+
+
+--- EXECUTION START ---
+REGDUMP (register 0): 	4
+REGDUMP (register 0): 	2
+ROOTRET (frames, ip): 0, 0
+
+--- EXECUTION END   ---
+
+
+--- EXECUTION START ---
+WRITE(s:1,b: ptr(0),l:4)
+ROOTRET (frames, ip): 0, 0
+
+--- EXECUTION END   ---
+
+
+--- EXECUTION START ---
+CALL (frames, ip): 1, 7
+REGDUMP (register 0): 	66
+RET (frames, ip): 1, 7
+ROOTRET (frames, ip): 0, 0
+
+--- EXECUTION END   ---
+
+
+--- EXECUTION START ---
+CALL (frames, ip): 1, 5
+REGDUMP (register 0): 	1
+CALL (frames, ip): 2, 5
+REGDUMP (register 0): 	2
+CALL (frames, ip): 3, 5
+REGDUMP (register 0): 	3
+CALL (frames, ip): 4, 5
+REGDUMP (register 0): 	4
+CALL (frames, ip): 5, 5
+REGDUMP (register 0): 	5
+RET (frames, ip): 5, 16
+RET (frames, ip): 4, 16
+RET (frames, ip): 3, 16
+RET (frames, ip): 2, 16
+RET (frames, ip): 1, 5
+ROOTRET (frames, ip): 0, 0
+
+--- EXECUTION END   ---

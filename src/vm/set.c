@@ -1,6 +1,6 @@
 #include "set.h"
-#include "disassembler.c"
-#include "../lib/cliargs.h"
+#include "../assembler/disassembler.c"
+#include "../../lib/cliargs.h"
 
 
 // TODO:

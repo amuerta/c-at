@@ -9,10 +9,10 @@
 
 #define HCH_ARGS_IMPLEMENTATION
 
-#include "../lib/cliargs.h"
+#include "../../lib/cliargs.h"
 
-#include "tokenizer.c"
-#include "set.h"
+#include "../tokenizer.c"
+#include "../vm/set.h"
 #include "disassembler.c"
 
 #define ERR_FEW_OPERANDS "\nERROR: not enough operands for instruction"
@@ -735,7 +735,7 @@ Instruction*
 
 #define MAX_SIZE 2048
 
-int main(int argc, char** argv) {
+int main_assemble(int argc, char** argv) {
 
 	// TODO: MAKE BUFFER HAVE UNLIMITED COUNT;
 	char fb[MAX_SIZE] = {0};
@@ -858,3 +858,56 @@ int main(int argc, char** argv) {
 
 }
 
+int main_disassemble(int argc, char** argv) {
+	Args a = args_init(argc,argv);
+
+	int   args_dis_flag = arg_find 			(a,"-d");
+	char* args_dis_path = arg_find_value 	(a,"-d");
+
+	if (args_dis_flag && !args_dis_path) {
+		printf("[WARN]:\t"  
+				"dissasemble flag found, "
+				"but not argument given"
+		);
+		return -1;
+	}
+	else if ( !(args_dis_flag && args_dis_path)) {
+		printf("f");
+		return 0;
+	}
+
+	size_t ps = 0;
+	Instruction* program = load_from_file(args_dis_path,&ps);
+	print_program_asm(program,ps);
+	free(program);
+
+	return 0;
+}
+
+
+int main(int argc, char** argv) {
+	// CLI PROCESSING:
+	Args a = args_init(argc,argv);
+
+	int   args_out_flag = arg_find 			(a,"-o");
+	int   args_dis_flag = arg_find 			(a,"-d");
+
+	if (argc < 2) {
+		printf("USAGE:\n"
+				"\t" 	"caasm [FLAGS] [FILE]" "\n"
+				"\t\t"		"FLAGS: \n"
+				"\t\t"		" '-d' - disassamble program source to stdout, can't be paired with '-o' "
+				"\t\t"		" '-o' - assamble program to instruction code, if not specified file name is 'out.caic'"
+		);
+		return -1;
+	}
+
+		
+
+	if (args_dis_flag) {
+		main_disassemble(argc,argv);
+	} else {
+		main_assemble(argc, argv); 
+	}
+
+}

@@ -1,5 +1,5 @@
 #include "set.c"
-#include "format.c"
+#include "../format.c"
 
 int main(int argc, char** argv) {
 
