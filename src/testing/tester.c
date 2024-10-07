@@ -128,8 +128,8 @@ int main(void) {
 	printl("Running native tests");
 	size_t sucessful_tests = 0;
 	bool native_all_good = run_native_tests(
-			RAW_TESTS_LIST,
-			RAW_TESTS_LIST_LEN,
+			TESTS_LIST,
+			TESTS_LIST_LEN,
 			&sucessful_tests,
 			log_file
 	);
@@ -142,7 +142,7 @@ int main(void) {
 				GREEN"SUCCESS"RESET : 
 				RED"FAILURE"RESET,
 
-			RAW_TESTS_LIST_LEN,
+			TESTS_LIST_LEN,
 			sucessful_tests
 	);
 

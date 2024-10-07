@@ -115,17 +115,27 @@ Instruction recursive_function_call[] = {
 	RET			(0)
 };
 
+Instruction casting_float_to_int[] = {
+	FSET		(0, 10.5),
+	FSET		(1, 10.5),
+	FADD		(0, 0, 1),
+	CF2I		(1,	0	),
+	RET			(1)
+};
+
+
 #define TEST_UNIT(PROG,RET) \
 	{ (RET), getname(PROG), (PROG), arrlen((PROG)) }
 
-TestProgram RAW_TESTS_LIST[] = 
+TestProgram TESTS_LIST[] = 
 {
-	TEST_UNIT(	simple_loop	, 	10	),
-	TEST_UNIT(	and_or, 		0	),
-	TEST_UNIT(	inc_dec, 		2	),
-	TEST_UNIT(	print, 			0	),
-	TEST_UNIT(	function_call, 	66	),
-	TEST_UNIT(	recursive_function_call, 	5	)
+	TEST_UNIT(	simple_loop	,				10	),
+	TEST_UNIT(	and_or,						0	),
+	TEST_UNIT(	inc_dec,					2	),
+	TEST_UNIT(	print,						0	),
+	TEST_UNIT(	function_call,				66	),
+	TEST_UNIT(	recursive_function_call, 	5	),
+	TEST_UNIT(	casting_float_to_int, 		21	)
 };
 
-const size_t RAW_TESTS_LIST_LEN = arrlen(RAW_TESTS_LIST);
+const size_t TESTS_LIST_LEN = arrlen(TESTS_LIST);

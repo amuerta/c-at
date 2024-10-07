@@ -3,11 +3,14 @@
 Virtual machine is WIP and isn't meant to be used on anything more than just messing around.
 
 ## TODO
-+ automated testing of predefined C templates
-+ system for logging info instead of spewing it on user screen
-+ more stack interation instructions: load, save, push, pop
++ more stack interation instructions: 
+    - iload, fload, sload, bload, lload ... save -> load and save of different sizes
+    - icpy,  fcpy, -> copy data from register to register
+    - skip  -> skip N instructions if first arg is >= 0
+    - ipop, spop, bpop, spush, fpush ... -> push and pop instructions of all sorts
 + stack allocation: allocstack, heap allocation: allocheap 
 + binary format header with supported major vm version, 
++ consider reworking mechanism of stack?
 
 ## ROADMAP
 +   x86-64 features:

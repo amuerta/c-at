@@ -310,8 +310,16 @@ Instruction i_fset(byte reg,float imm) {
 	};
 }
 
-#define FSET(R,S) \
+#define _FSET(R,S) \
 		i_fset((R),(S))
+
+
+#define FSET(R,S) 							\
+	{										\
+		.operation = I_FSET,				\
+		.argument_reg = {(R)},				\
+		.storage.as_f32 = (float)(S),		\
+	}
 
 #define SET(R,S)							\
 		(Instruction) {						\
