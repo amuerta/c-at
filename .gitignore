@@ -1,0 +1,9 @@
+# ignore root level assembly and bytecode
+*.caasm
+*.caic
+
+# ignore log core dumps
+/log/core_dump
+
+# ignore executables
+/bin
